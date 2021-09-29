@@ -95,8 +95,7 @@ public class Plant implements Runnable {
 		while (timeToWork) {
 			m.acquire(); // acquire block mutex
 			try {
-				String completedState = currentOrange.getState().toString(); // storing current state for the print
-																				// statement down the line
+				String completedState = currentOrange.getState().toString(); // storing current state for the print statement down the line
 				System.out.println(Thread.currentThread().getName() + " is busy...");
 				processOrange(currentOrange);
 				System.out.println(Thread.currentThread().getName() + " has " + completedState + " the orange!");
