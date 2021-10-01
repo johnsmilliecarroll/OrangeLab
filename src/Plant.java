@@ -8,7 +8,7 @@ public class Plant implements Runnable {
 	public static void main(String[] args) {
 		// Startup the plants
 		Plant[] plants = new Plant[NUM_PLANTS];
-		for (int i = 0; i < NUM_PLANTS; i++) {
+		for (int i = 0; i < NUM_PLANTS; i++) { // instantiate plants based on how many are in NUM_PLANTS
 			plants[i] = new Plant(1);
 			plants[i].startPlant();
 		}
@@ -41,6 +41,11 @@ public class Plant implements Runnable {
 		System.out.println("Created " + totalBottles + ", wasted " + totalWasted + " oranges");
 	}
 
+	/**
+	 * Allows a thread time to sleep, calls an error message if theres an
+	 * interrupted exception.
+	 */
+
 	private static void delay(long time, String errMsg) {
 		long sleepTime = Math.max(1, time);
 		try {
@@ -68,26 +73,48 @@ public class Plant implements Runnable {
 
 	}
 
+	/**
+	 * Begins plant by setting timeToWork to true, and loops through the worker
+	 * threads to start them.
+	 */
+
 	public void startPlant() {
 		timeToWork = true;
 		for (int i = 0; i < NUM_WORKERS; i++) {
-			workers[i].start();
+			workers[i].start(); // start worker threads
 		}
 	}
+
+	/**
+	 * Sets time to work to false, the plant is trying to stop.
+	 */
 
 	public void stopPlant() {
 		timeToWork = false;
 	}
 
+	/**
+	 * Called upon when plant is stopping, the worker threads need to be notified to
+	 * stop too.
+	 */
+
 	public void waitToStop() {
 		for (int i = 0; i < NUM_WORKERS; i++) {
 			try {
-				workers[i].join();
+				workers[i].join(); // stop threads
 			} catch (InterruptedException e) {
 				System.err.println(workers[i].getName() + " stop malfunction");
 			}
 		}
 	}
+
+	/**
+	 * This is where we run each thread. At the beginning we print each thread that
+	 * is going to be processing, then run the first one, calling on Block Mutex to
+	 * manage them. We print out which thread is working and begin work on the
+	 * orange. When it complete, we release the mutex, and call Thread.yield() to
+	 * make sure the thread takes a break and lets someone else do some work.
+	 */
 
 	public void run() {
 		System.out.print(Thread.currentThread().getName() + " Processing oranges");
@@ -95,8 +122,7 @@ public class Plant implements Runnable {
 		while (timeToWork) {
 			m.acquire(); // acquire block mutex
 			try {
-				String completedState = currentOrange.getState().toString(); // storing current state for the print
-																				// statement down the line
+				String completedState = currentOrange.getState().toString(); // storing current state for the print statement down the line
 				System.out.println(Thread.currentThread().getName() + " is busy...");
 				processOrange(currentOrange);
 				System.out.println(Thread.currentThread().getName() + " has " + completedState + " the orange!");
@@ -106,6 +132,12 @@ public class Plant implements Runnable {
 			Thread.yield(); // The worker takes a break and lets another worker do something
 		}
 	}
+
+	/**
+	 * This function relies on runProcess() in Orange. It does the "work" and
+	 * changes the state of the orange. If an orange has been bottled, we increment
+	 * oranges provided and processed and we create a new orange.
+	 */
 
 	private void processOrange(Orange o) {
 		if (o.getState() == Orange.State.Bottled) { // We've successfully processed an orange!
@@ -119,17 +151,40 @@ public class Plant implements Runnable {
 
 	}
 
+	/**
+	 * This returns current number of provided oranges. It is part of the
+	 * constructor for plant.
+	 */
+
 	public int getProvidedOranges() {
 		return orangesProvided;
 	}
+
+	/**
+	 * This returns current number of processed oranges. It is part of the
+	 * constructor for plant.
+	 */
 
 	public int getProcessedOranges() {
 		return orangesProcessed;
 	}
 
+	/**
+	 * This returns current number of bottles that have been filled, taking total
+	 * oranges processed divided by how many it takes to fill a bottle. It is part
+	 * of the constructor for plant.
+	 */
+
 	public int getBottles() {
 		return orangesProcessed / ORANGES_PER_BOTTLE;
 	}
+
+	/**
+	 * This returns the number of oranges that have not been bottled, taking total
+	 * oranges processed mod how many it takes to fill a bottle, resulting in the
+	 * unbottled oranges that arent being used. It is part of the constructor for
+	 * plant.
+	 */
 
 	public int getWaste() {
 		return orangesProcessed % ORANGES_PER_BOTTLE;
